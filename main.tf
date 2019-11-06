@@ -1,7 +1,14 @@
 provider "vault" {}
 
+locals {
+  use_vault_count = "${var.use_vault ? 1 : 0}"
+  # Create a list of map, which always have at least one element
+  vault_documentdb_list = "${concat(data.vault_generic_secret.documentdb_credentials.*.data, list(map("", "")))}"
+}
+
 data "vault_generic_secret" "documentdb_credentials" {
-  path = "${var.vault_generic_secret_documentdb_credentials_path}"
+  count = "${local.use_vault_count}"
+  path  = "${var.vault_generic_secret_documentdb_credentials_path}"
 }
 
 module "documentdb_cluster" {
@@ -10,9 +17,9 @@ module "documentdb_cluster" {
   # Custom configuration
   allowed_security_groups = ["${data.terraform_remote_state.elastic_beanstalk_environment.elastic_beanstalk_environment_security_group_id}"]
 
-  master_username = "${data.vault_generic_secret.documentdb_credentials.data["master_username"]}"
-  master_password = "${data.vault_generic_secret.documentdb_credentials.data["master_password"]}"
-
+  # Either set username/password from Vault if use_vault is true, or set username/password from environment variables
+  master_username = "${lookup(local.vault_documentdb_list[0], "master_username", var.master_username)}"
+  master_password = "${lookup(local.vault_documentdb_list[0], "master_password", var.master_password)}"
 
   # All variables available in the module
   allowed_cidr_blocks             = "${var.allowed_cidr_blocks}"

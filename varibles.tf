@@ -12,6 +12,7 @@ variable "elastic_beanstalk_environment_state_region" {
 
 variable "vault_generic_secret_documentdb_credentials_path" {
   description = "Path where is store documentdb credentials. That path must contain a 'master_username' and a æmaster_password' entry"
+  default     = "/"
 }
 
 ##############
@@ -172,4 +173,21 @@ variable "reader_dns_name" {
   type        = "string"
   description = "Name of the reader endpoint CNAME record to create in the parent DNS zone specified by `zone_id`. If left empty, the name will be auto-asigned using the format `replicas.var.name`"
   default     = ""
+}
+
+variable "use_vault" {
+  default     = true
+  description = "Get master_username and master_password from Vault"
+}
+
+variable "master_username" {
+  type        = "string"
+  default     = ""
+  description = "(Required only if use_vault is false) Username for the master DB user"
+}
+
+variable "master_password" {
+  type        = "string"
+  default     = ""
+  description = "(Required only if use_vault is false) Password for the master DB user. Note that this may show up in logs, and it will be stored in the state file. Please refer to the DocumentDB Naming Constraints"
 }
